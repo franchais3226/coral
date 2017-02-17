@@ -55,15 +55,15 @@ def queryDb(value_type, value):
     """Query Database to get options for each drop-down menu"""
     result, countRecords, minDate, maxDate = None, None, None, None
     db_connection = DbConnect(current_app.config)
-    keyList = ['biomimic_type', 'country', 'state_province', 'location', 'zone', 'sub_zone', \
-                'wave_exp', 'start_date', 'end_date', 'output_type', 'analysis_type']
+    keyList = ['biomimic_type', 'country', 'state_province', 'location', 'zone', \
+                'start_date', 'end_date', 'output_type', 'analysis_type']
     # delete all keys in session variable "query" after the selected field
     for key in keyList[keyList.index(value_type) + 1:]:
         session['query'].pop(key, None)
     session['query'][value_type] = value
     if value_type == "biomimic_type":
         result, countRecords, minDate, maxDate = \
-              db_connection.fetch_distinct_countries_and_zones(session['query'])
+              db_connection.fetch_distinct_countries(session['query'])
     elif value_type == "country":
         result, countRecords, minDate, maxDate = \
                         db_connection.fetch_distinct_states(session['query'])
@@ -71,16 +71,8 @@ def queryDb(value_type, value):
         result, countRecords, minDate, maxDate = \
                         db_connection.fetch_distinct_locations(session['query'])
     elif value_type == "location":
-        # location field doesn't have any associated dynamic behavior
-        # except for fetching metadata.
-        countRecords, minDate, maxDate = \
-                        db_connection.fetch_metadata(session['query'])
-    elif value_type == "zone":
         result, countRecords, minDate, maxDate = \
-                        db_connection.fetch_distinct_sub_zones(session['query'])
-    elif value_type == "sub_zone":
-        result, countRecords, minDate, maxDate = \
-                   db_connection.fetch_distinct_wave_exposures(session['query'])
+                        db_connection.fetch_distinct_zones(session['query'])
     db_connection.close()
     return result, countRecords, minDate, maxDate
 
@@ -94,8 +86,6 @@ def submit_query():
     query["state_province"] = form['state_province'][0]
     query["location"] = form['location'][0]
     query["zone"] = form['zone'][0]
-    query["sub_zone"] = form['sub_zone'][0]
-    query["wave_exp"] = form['wave_exp'][0]
     query["output_type"] = form['output_type'][0]
     if form.get('analysis_type') is not None:
         query["analysis_type"] = form['analysis_type'][0]
@@ -127,8 +117,9 @@ def download():
         time_title = "Year"
     else:
         time_title = "Timestamp"
-    header = [[key + ":" + str(value) for key, value in query.items()],
-              (time_title, "Temperature")]
+    header = [("Output type", "District", "Site", "Reef", "Reef Location", "Depth"), 
+                [query["output_type"], query["biomimic_type"], query["country"], query["state_province"], query["location"],  query["zone"]], 
+                (time_title, "Temperature")]
     query_results = header + db_connection.get_query_raw_results(session['db_query'])
     db_connection.close()
     return excel.make_response_from_array(query_results, "csv",
