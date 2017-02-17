@@ -22,8 +22,6 @@ CREATE TABLE `cnx_logger_biomimic_type` (
 CREATE TABLE `cnx_logger_properties` (                   
                          `prop_id` int(6) NOT NULL AUTO_INCREMENT,             
                          `zone` varchar(30) DEFAULT NULL,                       
-                         `sub_zone` varchar(30) DEFAULT NULL,                    
-                         `wave_exp` varchar(30) DEFAULT NULL,                   
                          PRIMARY KEY (`prop_id`)                                
                        ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;  
 
