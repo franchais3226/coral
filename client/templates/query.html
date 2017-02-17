@@ -33,6 +33,9 @@
                 <div class="collapse navbar-collapse" id="myNavbar">
                     <ul class="nav navbar-nav">
                         <li><a href="http://www.northeastern.edu/helmuthlab/index.html"><span class="glyphicon glyphicon-home"></span> <strong>Back to Helmuth lab Home</strong></a></li>
+                        <li><a href="https://www.northeastern.edu/helmuthlab/Research/databases/metadata_coral.xls" target="_blank"><span class="glyphicon glyphicon-upload"></span> <strong>Metadata</strong></a></li>
+                        <li><a href="http://www.northeastern.edu/helmuthlab/Research/databases/readme_coral.html" target="_blank"><span class="glyphicon glyphicon-upload"></span> <strong>Readme file</strong></a></li>                      
+                        <li><a href="http://www.northeastern.edu/helmuthlab/Research/databases/map_coral.html" target="_blank"><span class="glyphicon glyphicon-upload"></span> <strong>Reef Map</strong></a></li>                                              
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
                         {% if not session.logged_in %}
@@ -57,7 +60,7 @@
             <h1>DATABASE<h1>
         </div>
         <div class="container text-right">            
-            <a href="#" data-toggle="popover" data-placement="left" class= "btn btn-info" data-trigger="hover" data-content="Please click and choose an option from each select field in the following order: Biomimic type, Country, State, Location, Zone, Sub Zone, Wave exposure and Statistic">
+            <a href="#" data-toggle="popover" data-placement="left" class= "btn btn-info" data-trigger="hover" data-content="Please click and choose an option from each select field in the following order: District, Site, Reef, Reef Location, Depth and Statistic">
                 <span class="glyphicon glyphicon-question-sign"></span> Help
             </a>
         </div>
@@ -69,11 +72,11 @@
                 <div class="row">
                     <div class="col-md-3 form-group">
                         <div class="input-group">
-                            <label for="dropdown_menu_biomimic_type">Biomimic Type:<w class = "text-danger"> * <w> </label>
+                            <label for="dropdown_menu_biomimic_type">Logger Type:<w class = "text-danger"> * <w> </label>
                             <img src="../static/spinner.gif" alt="Loading.." id="spinner-biomimic" hidden>
                         </div>                        
                         <select id ="dropdown_menu_biomimic_type" class="form-control" required>
-                            <option value="">Please select Biomimic Type</option>
+                            <option value="">Please select Logger Type</option>
                             {% for type in form.biomimic_type %}
                                 <option value="{{ type }}">{{ type[1] }}</option>
                             {% endfor %}
@@ -91,20 +94,20 @@
                     </div>
                     <div class="col-md-3 form-group" id="dropdown_menu_state_name_div" >
                         <div class="input-group">
-                            <label for="dropdown_menu_state_name">State Name:<w class = "text-danger"> * <w> </label>
+                            <label for="dropdown_menu_state_name">District Name:<w class = "text-danger"> * <w> </label>
                             <img src="../static/spinner.gif" alt="Loading.." id="spinner-state" hidden>
                         </div>
                         <select id ="dropdown_menu_state_name" class="form-control" required disabled>
-                            <option value="">Please select State Name</option>
+                            <option value="">Please select District Name</option>
                         </select>                                                   
                     </div>
                     <div class="col-md-3 form-group" id="dropdown_menu_location_name_div">
                         <div class="input-group">
-                            <label for="dropdown_menu_location_name">Location Name:<w class = "text-danger"><strong> *</strong> <w> </label>
+                            <label for="dropdown_menu_location_name">Site Name:<w class = "text-danger"><strong> *</strong> <w> </label>
                             <img src="../static/spinner.gif" alt="Loading.." id="spinner-location" hidden>
                         </div>                        
                         <select id ="dropdown_menu_location_name" class="form-control" required disabled>
-                            <option value="">Please select Location Name</option>
+                            <option value="">Please select Site Name</option>
                         </select>
                     </div>
                 </div>
@@ -113,31 +116,13 @@
                 <div class="row">                    
                     <div class="col-md-4 form-group" id="dropdown_menu_zone_name_div">
                         <div class="input-group">
-                            <label for="dropdown_menu_zone_name">Zone Name:<w class = "text-danger"> * <w> </label>
+                            <label for="dropdown_menu_zone_name">Reef:<w class = "text-danger"> * <w> </label>
                             <img src="../static/spinner.gif" alt="Loading.." id="spinner-zone" hidden>
                         </div>                                                                        
                         <select id ="dropdown_menu_zone_name" class="form-control" required disabled>
-                            <option value="">Please select Zone Name</option>
+                            <option value="">Please select Reef</option>
                         </select>
                     </div>
-                    <div class="col-md-4 form-group" id="dropdown_menu_sub_zone_name_div">
-                        <div class="input-group">
-                            <label for="dropdown_menu_sub_zone_name">Sub Zone:<w class = "text-danger"> * <w> </label>
-                            <img src="../static/spinner.gif" alt="Loading.." id="spinner-sub-zone" hidden>
-                        </div>                                                                        
-                        <select id ="dropdown_menu_sub_zone_name" class="form-control" required disabled>
-                            <option value="">Please select Sub Zone</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4 form-group" id="dropdown_menu_wave_exp_name_div">
-                        <div class="input-group">
-                            <label for="dropdown_menu_wave_exp_name">Wave Exposure:<w class = "text-danger"> * <w> </label>
-                            <img src="../static/spinner.gif" alt="Loading.." id="spinner-wave-exp" hidden>
-                        </div>                        
-                        <select id ="dropdown_menu_wave_exp_name" class="form-control" required disabled>
-                            <option value="">Please select Wave Exposure</option>
-                        </select>
-                    </div>                    
                 </div>
                 <br>
                 <!-- Third row in query form -->
