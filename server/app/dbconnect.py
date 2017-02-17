@@ -32,30 +32,20 @@ class DbConnect(object):
         cursor.close()
         return final_result
 
-    def fetch_distinct_countries_and_zones(self, query_dict):
-        """Fetches all countries for selected biomimic type"""
+    def fetch_distinct_countries(self, query_dict):
+       """Fetches all countries for selected biomimic type"""
         cursor = self.connection.cursor()
         query = """SELECT DISTINCT geo.country
                    FROM `cnx_logger` log
                    INNER JOIN `cnx_logger_biomimic_type` biotype
                    ON biotype.`biomimic_id`=log.`biomimic_id`
                    INNER JOIN `cnx_logger_geographics` geo
-                   ON geo.`geo_id`=log.`geo_id`
-                   WHERE biotype.`biomimic_type`=\'%s\'""" % query_dict['biomimic_type']
-        cursor.execute(query + " ORDER BY 1 ASC")
+                   ON geo.`geo_id`=log.`geo_id` """
+        where_condition = self.build_where_condition(query_dict)
+        cursor.execute(query + where_condition + " ORDER BY 1 ASC")
         result = cursor.fetchall()
-        country_list = [row[0] for row in result]
-        query = """SELECT DISTINCT prop.zone FROM `cnx_logger` log
-                   INNER JOIN `cnx_logger_biomimic_type` biotype
-                   ON biotype.`biomimic_id`=log.`biomimic_id`
-                   INNER JOIN `cnx_logger_properties` prop
-                   ON prop.`prop_id`=log.`prop_id`
-                   WHERE biotype.biomimic_type=\'%s\'""" % query_dict['biomimic_type']
-        cursor.execute(query + " ORDER BY 1 ASC")
-        result = cursor.fetchall()
-        zone_list = [row[0] for row in result]
+        final_result = [row[0] for row in result]
         cursor.close()
-        final_result = {"country": country_list, "zone": zone_list}
         count_records, min_date, max_date = self.fetch_metadata(query_dict)
         return final_result, count_records, min_date, max_date
 
@@ -94,11 +84,11 @@ class DbConnect(object):
         count_records, min_date, max_date = self.fetch_metadata(query_dict)
         return final_result, count_records, min_date, max_date
 
-    def fetch_distinct_sub_zones(self, query_dict):
+    def fetch_distinct_zones(self, query_dict):
         """ Fetches Distinct Subzones for selected biomimic type, country,
             state_province, location and zones"""
         cursor = self.connection.cursor()
-        query = """SELECT DISTINCT prop.sub_zone
+        query = """SELECT DISTINCT prop.zone
                    FROM `cnx_logger` log
                    INNER JOIN `cnx_logger_biomimic_type` biotype
                    ON biotype.`biomimic_id`=log.`biomimic_id`
@@ -106,25 +96,6 @@ class DbConnect(object):
                    ON geo.`geo_id`=log.`geo_id`
                    INNER JOIN `cnx_logger_properties` prop
                    ON prop.`prop_id`=log.`prop_id` """
-        where_condition = self.build_where_condition(query_dict)
-        cursor.execute(query + where_condition + " ORDER BY 1 ASC")
-        result = cursor.fetchall()
-        final_result = ['N/A' if row[0] is None else row[0] for row in result]
-        cursor.close()
-        count_records, min_date, max_date = self.fetch_metadata(query_dict)
-        return final_result, count_records, min_date, max_date
-
-    def fetch_distinct_wave_exposures(self, query_dict):
-        """Fetches Distinct Wave Exp for selected biomimic type, country,
-            state_province, location, zones and sub_zones"""
-        cursor = self.connection.cursor()
-        query = """SELECT DISTINCT prop.wave_exp FROM `cnx_logger` log
-                   INNER JOIN `cnx_logger_biomimic_type` biotype
-                   ON biotype.`biomimic_id`=log.`biomimic_id`
-                   INNER JOIN `cnx_logger_geographics` geo
-                   ON geo.`geo_id`=log.`geo_id`
-                   INNER JOIN `cnx_logger_properties` prop
-                   ON prop.`prop_id`=log.`prop_id`"""
         where_condition = self.build_where_condition(query_dict)
         cursor.execute(query + where_condition + " ORDER BY 1 ASC")
         result = cursor.fetchall()
@@ -167,13 +138,13 @@ class DbConnect(object):
         temp_field = ""
 
         if output_type == "Min":                            # Min
-            temp_field = "MIN(temp.Temp_C)"
+            temp_field = "round(MIN(temp.Temp_C),2)"
         elif output_type == "Max":                          # Max
-            temp_field = "MAX(temp.Temp_C)"
+            temp_field = "round(MAX(temp.Temp_C),2)"
         elif output_type == "Average":                      # Average
-            temp_field = "AVG(temp.Temp_C)"
+            temp_field = "round(AVG(temp.Temp_C),2)"
         else:                                               # Raw
-            temp_field = "temp.Temp_C"
+            temp_field = "temp.Temp_C, log.microsite_id"
 
         if analysis_type == "Daily":                        # Daily
             date_field = "DATE_FORMAT(temp.Time_GMT, '%m/%d/%Y')"
@@ -197,9 +168,10 @@ class DbConnect(object):
         cursor.execute(query + where_condition + " LIMIT 10 ")
         results = cursor.fetchall()
         results = list(results)
-        final_result = [[result[0], round(result[1], 4)] for result in results]
+	#for result in results:
+	#	result[1] = round(result[1], 4)
         cursor.close()
-        return final_result, query + where_condition
+        return results, query + where_condition
 
     def get_query_raw_results(self, db_query):
         """Fetches records form tables based on user query"""
@@ -207,9 +179,10 @@ class DbConnect(object):
         cursor.execute(db_query)
         results = cursor.fetchall()
         results = list(results)
-        final_result = [[result[0], round(result[1], 4)] for result in results]
+	#for result in results:
+	#	result[1] = round(result[1], 4)
         cursor.close()
-        return final_result
+        return results
 
     def build_where_condition(self, query_dict):
         """Builds the where_condition for the Select Query"""
@@ -219,20 +192,13 @@ class DbConnect(object):
             where += " AND geo.`country`=\'%s\'" % (query_dict['country'])
         if query_dict.get('state_province') is not None:
             where += " AND geo.`state_province`=\'%s\'" % (query_dict['state_province'])
-        if query_dict.get('location') is not None:
-            where += " AND geo.`location`=\'%s\'" % (query_dict['location'])
+        if query_dict.get('location') is not None and (query_dict.get('location') != 'All'):
+            if query_dict.get('location') == 'N/A':
+                where += " AND geo.location is Null"
+            else:
+                where += " AND geo.`location`=\'%s\'" % (query_dict.get('location'))
         if (query_dict.get('zone') is not None) and (query_dict.get('zone') != 'All'):
             where += " AND prop.`zone`=\'%s\'" % (query_dict.get('zone'))
-        if (query_dict.get('sub_zone') is not None) and (query_dict.get('sub_zone') != 'All'):
-            if query_dict.get('sub_zone') == 'N/A':
-                where += " AND prop.sub_zone is Null"
-            else:
-                where += " AND prop.`sub_zone`=\'%s\'" % (query_dict.get('sub_zone'))
-        if (query_dict.get('wave_exp') is not None) and (query_dict.get('wave_exp') != 'All'):
-            if query_dict.get('wave_exp') == 'N/A':
-                where += " AND prop.wave_exp is Null"
-            else:
-                where += " AND prop.`wave_exp`=\'%s\' " % (query_dict.get('wave_exp'))
         if (query_dict.get('start_date') is not None) and (query_dict.get('end_date') is not None):
             where += """ AND cast(temp.Time_GMT as date) >= \'%s\'
                          AND cast(temp.Time_GMT as date) <= \'%s\'""" % \
@@ -252,7 +218,7 @@ class DbConnect(object):
         """Parse new Logger Type"""
         parsed_record = dict()
         error = False
-        if (len(data_list) != 11) or (self.is_not_float(data_list[2])) or \
+        if (len(data_list) != 9) or (self.is_not_float(data_list[2])) or \
            (self.is_not_float(data_list[3])) or (data_list[0] == "None") or \
            (data_list[0] == ""):
             error = True
@@ -261,15 +227,12 @@ class DbConnect(object):
             parsed_record['site'] = (data_list[1]).upper()
             parsed_record['field_lat'] = data_list[2]
             parsed_record['field_lon'] = data_list[3]
-            parsed_record['location'] = data_list[4]
+            parsed_record['location'] = None if (data_list[4] == "N/A") \
+                                            else data_list[4].capitalize()
             parsed_record['state_province'] = data_list[5]
             parsed_record['country'] = data_list[6]
             parsed_record['biomimic_type'] = data_list[7].capitalize()
             parsed_record['zone'] = data_list[8].capitalize()
-            parsed_record['sub_zone'] = None if (data_list[9] == "N/A") \
-                                            else data_list[9].capitalize()
-            parsed_record['wave_exp'] = None if (data_list[10] == "N/A") \
-                                            else data_list[10].capitalize()
         return parsed_record, error
 
     def is_not_float(self, value):
@@ -386,10 +349,6 @@ class DbConnect(object):
         """Check for Existing Properties Data"""
         query = "SELECT `prop_id` from `cnx_logger_properties`"
         where = " WHERE `zone`=\'%s\'" % (record.get("zone"))
-        if record.get('sub_zone') is not None:
-            where += " AND `sub_zone`=\'%s\'" % (record.get('sub_zone'))
-        if record.get('wave_exp') is not None:
-            where += " AND `wave_exp`=\'%s\'" % (record.get('wave_exp'))
         cursor.execute(query + where)
         result = cursor.fetchone()
         return result
@@ -398,17 +357,8 @@ class DbConnect(object):
         """Insert new Properties Data in DB"""
         corrupt = False
         values = " VALUES (\'%s\'" % record.get("zone")
-        if record.get('sub_zone') is None:
-            values += ", NULL"
-        else:
-            values += ", \'%s\'" % record.get("sub_zone")
-        if record.get('wave_exp') is None:
-            values += ", NULL"
-        else:
-            values += ", \'%s\'" % record.get("wave_exp")
-        values += ")"
         query = """INSERT INTO `cnx_logger_properties`
-                   (`zone`, `sub_zone`, `wave_exp`)""" + values
+                   (`zone`)""" + values
         try:
             res = cursor.execute(query)
         except MySQLdb.Error:
